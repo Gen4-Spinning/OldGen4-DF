@@ -71,7 +71,7 @@ public interface Pattern {
     }
 
     enum PID_OPTIONS {
-        DF_STOP_VARS,DF_START_VARS,CREEL,BACK_ROLLER,FRONT_ROLLER
+        DF_RAMP_VARS,CREEL,BACK_ROLLER,FRONT_ROLLER
     }
 
 
@@ -213,8 +213,7 @@ public interface Pattern {
             put(PID_OPTIONS.FRONT_ROLLER.name(), "30");
             put(PID_OPTIONS.BACK_ROLLER.name(), "31");
             put(PID_OPTIONS.CREEL.name(), "32");
-            put(PID_OPTIONS.DF_START_VARS.name(), "33");
-            put(PID_OPTIONS.DF_STOP_VARS.name(), "34");
+            put(PID_OPTIONS.DF_RAMP_VARS.name(), "33");
         }
     };
 

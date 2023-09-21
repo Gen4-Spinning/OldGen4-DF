@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">"Drawframe"</string>
     <string name="version">"Ver:"</string>
-    <string name="code">"PH2_AQ-DF-V05"</string>
+    <string name="code">"IL-DF-V06"</string>
     <string name="action_scan">SCAN</string>
     <string name="action_stop">STOP</string>
     <string name="action_restart">Restart</string>
@@ -65,8 +65,9 @@
     <string name="label_Kp">Kp</string>
     <string name="label_Ki">Ki</string>
     <string name="label_startingOffset">Starting PWM Offset </string>
-    <string name="label_C1">C1</string>
-    <string name="label_C2">C2</string>
+    <string name="label_FFConstant">FeedForward Multiplier </string>
+    <string name="label_C1">RampUp </string>
+    <string name="label_C2">RampDown</string>
     <string name="label_C3">C3</string>
     <string name="label_C4">((C1/draft) * (M1pwm - C2)) + C3 </string>
     <string name="label_speedStop">Stop_Rpm_Trigger</string>

@@ -35,8 +35,8 @@ public class SettingsFragment extends Fragment implements View.OnClickListener,V
     private SettingsCommunicator mCallback;
     private EditTextCustom setting1;
     private EditText setting2,setting3;
-    public EditText Kpsetting,Kisetting,startOffsetsetting; // pid motor options
-    public EditText c1setting,c2setting,c3setting; //df start vars
+    public EditText Kpsetting,Kisetting,startOffsetsetting,FFMultiplierSetting; // pid motor options
+    public EditText RampUpSetting, RampDownSetting; //df start vars
     public EditText RPMStopTriggersetting; //df stop vars
 
     public Button saveBtn,factorystngsBtn,PIDBtn,refreshPIDBtn,savePIDBtn;
@@ -76,7 +76,7 @@ public class SettingsFragment extends Fragment implements View.OnClickListener,V
 
         factorystngsBtn = (Button) rootView.findViewById(R.id.factorystngs);
         factorystngsBtn.setOnClickListener(this);
-	setStatusInputFields(false);
+	    setStatusInputFields(false);
 
         /* Pid Setting Stuff */
         PIDBtn = (Button)rootView.findViewById(R.id.pidBtn);
@@ -113,10 +113,11 @@ public class SettingsFragment extends Fragment implements View.OnClickListener,V
         Kpsetting =  (EditText)rootView.findViewById(R.id.kpSetting);
         Kisetting =  (EditText)rootView.findViewById(R.id.kiSetting);
         startOffsetsetting =  (EditText)rootView.findViewById(R.id.startoffsetSetting);
+        FFMultiplierSetting = (EditText)rootView.findViewById(R.id.FFConstantSetting);
         // df start vars options
-        c1setting =  (EditText)rootView.findViewById(R.id.c1Setting);
-        c2setting =  (EditText)rootView.findViewById(R.id.c2Setting);
-        c3setting =  (EditText)rootView.findViewById(R.id.c3Setting);
+        RampUpSetting =  (EditText)rootView.findViewById(R.id.c1Setting);
+        RampDownSetting =  (EditText)rootView.findViewById(R.id.c2Setting);
+
         //df stop var options
         RPMStopTriggersetting =  (EditText)rootView.findViewById(R.id.df_stopSetting);
 
@@ -235,29 +236,33 @@ public class SettingsFragment extends Fragment implements View.OnClickListener,V
                 String pidOptionSelected = Utility.formatStringCode(pidOptionTypes.getSelectedItem().toString());
                 String attrValue = Pattern.PIDOptionMap.get(pidOptionSelected);
                 // check which layout and get the current value
-
                 int attr1Int= 0;
                 int attr2Int = 0;
                 int attr3Int = 0;
+                int attr4Int = 0;
                 if (PID_current_Layout == PID_MOTOR_LAYOUT) {
                     attr1Int  = (int)(Float.parseFloat(Kpsetting.getText().toString()) * 100);
                     attr2Int = (int)(Float.parseFloat(Kisetting.getText().toString()) * 100);
                     attr3Int = Integer.parseInt(startOffsetsetting.getText().toString());
+                    attr4Int = (int)(Float.parseFloat((FFMultiplierSetting.getText().toString()))*100);
                 }
                 else if (PID_current_Layout == PID_DF_START_LAYOUT){
-                    attr1Int  = (int)(Float.parseFloat(c1setting.getText().toString()) * 100);
-                    attr2Int = Integer.parseInt(c2setting.getText().toString());
-                    attr3Int = Integer.parseInt(c3setting.getText().toString());
+                    attr1Int  = Integer.parseInt(RampUpSetting.getText().toString());
+                    attr2Int = Integer.parseInt(RampDownSetting.getText().toString());
+                    attr3Int = 0;
+                    attr4Int = 0;
                 }
                 else{
                     attr1Int  = Integer.parseInt(RPMStopTriggersetting.getText().toString());
                     attr2Int = 0;
                     attr3Int = 0;
+                    attr4Int = 0;
                 }
                 String payload = Settings.updateNewPIDSetting(attrValue,
                         attr1Int,
                         attr2Int,
-                        attr3Int
+                        attr3Int,
+                        attr4Int
                 );
 
                 mCallback.onSettingsUpdate(payload.toUpperCase());
@@ -275,14 +280,14 @@ public class SettingsFragment extends Fragment implements View.OnClickListener,V
             { Kisetting.setText("0"); }
             if (TextUtils.isEmpty(startOffsetsetting.getText().toString()))
             { startOffsetsetting.setText("0"); }
+            if (TextUtils.isEmpty(FFMultiplierSetting.getText().toString()))
+            { FFMultiplierSetting.setText("0"); }
 
         }else if (pidLayout == PID_DF_START_LAYOUT){
-            if (TextUtils.isEmpty(c1setting.getText().toString()))
-            { c1setting.setText("0"); }
-            if (TextUtils.isEmpty(c2setting.getText().toString()))
-            { c2setting.setText("0"); }
-            if (TextUtils.isEmpty(c3setting.getText().toString()))
-            { c3setting.setText("0"); }
+            if (TextUtils.isEmpty(RampUpSetting.getText().toString()))
+            { RampUpSetting.setText("0"); }
+            if (TextUtils.isEmpty(RampDownSetting.getText().toString()))
+            { RampDownSetting.setText("0"); }
         }else{
             if (TextUtils.isEmpty(RPMStopTriggersetting.getText().toString()))
             { RPMStopTriggersetting.setText("0"); }
@@ -303,9 +308,10 @@ public class SettingsFragment extends Fragment implements View.OnClickListener,V
     private String isValidPIDSettings(int pidLayout) {
 
         if (pidLayout == PID_MOTOR_LAYOUT) {
-            DoubleInputFilter set1 = new DoubleInputFilter(getString(R.string.label_Kp), 0.01, 2.0);
-            DoubleInputFilter set2 = new DoubleInputFilter(getString(R.string.label_Ki), 0.01, 2.0);
+            DoubleInputFilter set1 = new DoubleInputFilter(getString(R.string.label_Kp), 0.01, 6.0);
+            DoubleInputFilter set2 = new DoubleInputFilter(getString(R.string.label_Ki), 0.01, 6.0);
             IntegerInputFilter set3 = new IntegerInputFilter(getString(R.string.label_startingOffset), 0, 700);
+            DoubleInputFilter set4 = new DoubleInputFilter(getString(R.string.label_FFConstant), 0.01, 5.0);
 
             if (set1.filter(Kpsetting) != null) {
                 return set1.filter(Kpsetting);
@@ -316,20 +322,20 @@ public class SettingsFragment extends Fragment implements View.OnClickListener,V
             if (set3.filter(startOffsetsetting) != null) {
                 return set3.filter(startOffsetsetting);
             }
+            if (set4.filter(FFMultiplierSetting) != null) {
+                return set4.filter(FFMultiplierSetting);
+            }
+
         }
         else if (pidLayout == PID_DF_START_LAYOUT){
-            DoubleInputFilter set1 = new DoubleInputFilter(getString(R.string.label_C1), 0.01, 99.99);
-            IntegerInputFilter set2 = new IntegerInputFilter(getString(R.string.label_C2), 0, 999);
-            IntegerInputFilter set3 = new IntegerInputFilter(getString(R.string.label_C3), 0, 999);
+            IntegerInputFilter set1 = new IntegerInputFilter(getString(R.string.label_C1), 2, 12);
+            IntegerInputFilter set2 = new IntegerInputFilter(getString(R.string.label_C2), 2, 12);
 
-            if (set1.filter(c1setting) != null) {
-                return set1.filter(c1setting);
+            if (set1.filter(RampUpSetting) != null) {
+                return set1.filter(RampUpSetting);
             }
-            if (set2.filter(c2setting) != null) {
-                return set2.filter(c2setting);
-            }
-            if (set3.filter(c3setting) != null) {
-                return set3.filter(c3setting);
+            if (set2.filter(RampDownSetting) != null) {
+                return set2.filter(RampDownSetting);
             }
         }
         else{
@@ -436,11 +442,9 @@ private List<String> getValueListForPIDOptions() {
                                int pos, long id) {
         // if not motors, then show the options of the start and stop variables, else show the motor variables
         String pidOptionsSelected = Utility.formatStringCode((pidOptionTypes.getSelectedItem().toString()));
-        if (pidOptionsSelected.equals(Pattern.PID_OPTIONS.DF_START_VARS.toString())) {
+        if (pidOptionsSelected.equals(Pattern.PID_OPTIONS.DF_RAMP_VARS.toString())) {
             PID_current_Layout = PID_DF_START_LAYOUT;
-        } else if (pidOptionsSelected.equals(Pattern.PID_OPTIONS.DF_STOP_VARS.toString())) {
-            PID_current_Layout = PID_DF_STOP_LAYOUT;
-        } else {
+        }else {
             PID_current_Layout = PID_MOTOR_LAYOUT;
         }
         ChangePIDLayoutState(PID_current_Layout);
@@ -455,11 +459,11 @@ private List<String> getValueListForPIDOptions() {
              Kisetting.setEnabled(setting);
              Kpsetting.setEnabled(setting);
              startOffsetsetting.setEnabled(setting);
+             FFMultiplierSetting.setEnabled(setting);
          }
          if (current_layout == PID_DF_START_LAYOUT) {
-             c1setting.setEnabled(setting);
-             c2setting.setEnabled(setting);
-             c3setting.setEnabled(setting);
+             RampUpSetting.setEnabled(setting);
+             RampDownSetting.setEnabled(setting);
          }
          if (current_layout == PID_DF_STOP_LAYOUT) {
              RPMStopTriggersetting.setEnabled(setting);
@@ -472,17 +476,17 @@ private List<String> getValueListForPIDOptions() {
             Kpsetting.setText(Settings.MakeFloatString(Settings.pid_req_attr1 / 100.0f,2));
             Kisetting.setText(Settings.MakeFloatString(Settings.pid_req_attr2 / 100.0f,2));
             startOffsetsetting.setText(Settings.MakeIntString(Settings.pid_req_attr3));
+            FFMultiplierSetting.setText(Settings.MakeFloatString(Settings.pid_req_attr4 / 100.0f,2));
             Kisetting.setEnabled(true);
             Kpsetting.setEnabled(true);
             startOffsetsetting.setEnabled(true);
+            FFMultiplierSetting.setEnabled(true);
         }
         else if(PID_current_Layout == PID_DF_START_LAYOUT){
-            c1setting.setText(Settings.MakeFloatString(Settings.pid_req_attr1 / 100.0f,2));
-            c2setting.setText(Settings.MakeIntString(Settings.pid_req_attr2));
-            c3setting.setText(Settings.MakeIntString(Settings.pid_req_attr3));
-            c1setting.setEnabled(true);
-            c2setting.setEnabled(true);
-            c3setting.setEnabled(true);
+            RampUpSetting.setText(Settings.MakeIntString(Settings.pid_req_attr1));
+            RampDownSetting.setText(Settings.MakeIntString(Settings.pid_req_attr2));
+            RampUpSetting.setEnabled(true);
+            RampDownSetting.setEnabled(true);
         }
         else {
             RPMStopTriggersetting.setText(Settings.MakeIntString(Settings.pid_req_attr1));
@@ -508,9 +512,11 @@ private List<String> getValueListForPIDOptions() {
             Kisetting.setText(ZEROSTRING);
             Kpsetting.setText(ZEROSTRING);
             startOffsetsetting.setText(ZEROSTRING);
+            FFMultiplierSetting.setText(ZEROSTRING);
             Kisetting.setEnabled(false);
             Kpsetting.setEnabled(false);
             startOffsetsetting.setEnabled(false);
+            FFMultiplierSetting.setEnabled(false);
         }
 
         if (layout == PID_DF_START_LAYOUT) {
@@ -518,12 +524,10 @@ private List<String> getValueListForPIDOptions() {
             PID_df_Start_optionView.setVisibility(View.VISIBLE);
             PID_df_stop_optionView.setVisibility(View.GONE);
 
-            c1setting.setText(ZEROSTRING);
-            c2setting.setText(ZEROSTRING);
-            c3setting.setText(ZEROSTRING);
-            c1setting.setEnabled(false);
-            c2setting.setEnabled(false);
-            c3setting.setEnabled(false);
+            RampUpSetting.setText(ZEROSTRING);
+            RampDownSetting.setText(ZEROSTRING);
+            RampUpSetting.setEnabled(false);
+            RampDownSetting.setEnabled(false);
         }
 
         if (layout == PID_DF_STOP_LAYOUT) {
